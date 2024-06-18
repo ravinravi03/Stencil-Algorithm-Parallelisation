@@ -10,7 +10,7 @@ public class Stencil{
         boolean tryAgain = false;
 
         do {
-            System.out.println("Please select a framework to test ISLs on: ");
+            System.out.println("\n Please select a framework to test ISLs on: ");
             System.out.println("> 1 - Java Executor Service");
             System.out.println("> 2 - GPU Vectorisation using Aparapi (Requires GPU)");
             System.out.println("Enter your choice (1 or 2): ");
@@ -22,10 +22,10 @@ public class Stencil{
 
               switch (choice){
                     case 1:
-                        handleJavaExecutorService(scanner,tryAgain);
+                        tryAgain = handleJavaExecutorService(scanner,tryAgain);
                         break;
                     case 2:
-                        handleGPUVectorisation(scanner,tryAgain);
+                        tryAgain = handleGPUVectorisation(scanner,tryAgain);
                         break;
                     default:
                         System.out.println("Please enter a valid choice, either 1 or 2: ");
@@ -43,7 +43,7 @@ public class Stencil{
         System.out.printf("Speedup achieved: %.2f%% %n ", speedUp);
     }
     
-    public static void handleJavaExecutorService(Scanner scanner, boolean tryAgain){
+    public static boolean handleJavaExecutorService(Scanner scanner, boolean tryAgain){
         System.out.print("Are we testing 1D, 2D or 3D matrices? (Enter '1D' or '2D' or '3D'): ");
         String dimension;
         do {
@@ -202,12 +202,12 @@ public class Stencil{
 
         displaySpeedUp(sequentialDuration, parallelDuration);
 
-        System.out.println("Would you like to try this again? (Y/N): ");
+        System.out.println("\n Would you like to try this again? (Y/N): ");
         input = scanner.nextLine().trim().toLowerCase();
-        tryAgain = input.equals("y");
+        return input.equals("y");
     }
 
-    public static void handleGPUVectorisation(Scanner scanner, boolean tryAgain){
+    public static boolean handleGPUVectorisation(Scanner scanner, boolean tryAgain){
         System.out.print("Enter grid size (e.g., 1000): ");
         int gridSize = scanner.nextInt();
 
@@ -257,9 +257,9 @@ public class Stencil{
 
         displaySpeedUp(sequentialDuration, parallelDuration);
 
-        System.out.println("Would you like to try this again? (Y/N): ");
+        System.out.println("\n Would you like to try this again? (Y/N): ");
         input = scanner.nextLine().trim().toLowerCase();
-        tryAgain = input.equals("y");
+        return input.equals("y");
 
     }
 
