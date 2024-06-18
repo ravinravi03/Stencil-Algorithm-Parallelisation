@@ -1,42 +1,184 @@
+import java.util.Scanner;
+
 public class Stencil{
 
     public static void main(String[] args){
+        Scanner scanner = new Scanner(System.in);
 
+        System.out.print("Hi there!, Welcome to my application. This application is used to test different methods in parallelising iterative stencil loops\n");
 
-        //Making random 2D matrices
-        int[][] grid = ArrayUtil.generateRandomGrid(1000,100);
-        int[][] gridCopy = ArrayUtil.copyExistingGrid(grid);
+        boolean tryAgain;
 
-        //Making random 3D matrices
-        int[][][] threeDimensionalArray = ArrayUtil.generateRandom3DGrid(100, 100);
-        int[][][] threeDimensionalArrayCopy = ArrayUtil.copyExisting3DGrid(threeDimensionalArray);
+        do {
+            System.out.print("Are we testing 1D, 2D or 3D matrices? (Enter '1D' or '2D' or '3D'): ");
+            String dimension;
+            do {
+                dimension = scanner.nextLine().trim().toUpperCase();
 
-        long startTime = System.currentTimeMillis();
-        //Sequential.stencilSequentialAlgorithm_Moore(100, grid, gridCopy);
-        Sequential.stencilSequentialAlgorithm_VonNeumann(100, grid, gridCopy);
+                switch (dimension) {
+                    case "1D" -> System.out.println("You have selected 1D");
+                    case "2D" -> System.out.println("You have selected 2D");
+                    case "3D" -> System.out.println("You have selected 3D");
+                    default -> System.out.println("Please enter a valid input. (Has to be either '1D' or '2D' or '3D'");
+                }
+            } while ((!dimension.equals("1D") && !dimension.equals("2D") && !dimension.equals("3D")));
 
-        //Sequential.stencil3DSequentialAlgorithm_Moore(100, threeDimensionalArray, threeDimensionalArrayCopy);
-        //Sequential.stencil3DSequentialAlgorithm_VonNeumann(100, threeDimensionalArray, threeDimensionalArrayCopy);
+            System.out.print("Enter grid size (e.g., 1000): ");
+            int gridSize = scanner.nextInt();
 
-        long endTime = System.currentTimeMillis();
+            System.out.print("Enter a number of iterations to apply the iterative stencil loop on (e.g., 100): ");
+            int numOfIterations = scanner.nextInt();
+            scanner.nextLine();
 
-        long duration = endTime-startTime;
+            int numOfProcessors = Runtime.getRuntime().availableProcessors();
+            int blockSize = (gridSize + numOfProcessors - 1) / numOfProcessors;
 
-        System.out.println("The sequential algorithm took " +duration+" milliseconds");
+            System.out.print("Enter the value of the block size (press Enter to use the default value of " + blockSize + "): ");
 
-        startTime = System.currentTimeMillis();
+            String input = scanner.nextLine().trim();
 
-        //Set the useMoore boolean to true or false for the parallel implementation to use either the moore or von neumann neighbourhood
+            if (!input.isEmpty()) {
+                blockSize = Integer.parseInt(input);
+            }
 
-        Parallel.stencilParallelisedAlgorithm(100, grid,gridCopy, 10, false);
-        //Parallel.stencil3DParallelisedAlgorithm(100, threeDimensionalArray, threeDimensionalArrayCopy, 12, true);
+            System.out.println("Block size: " + blockSize);
 
-        endTime = System.currentTimeMillis();
+            int[][] grid = null;
+            int[][] gridCopy = null;
+            int[][][] threeDimensionalArray = null;
+            int[][][] threeDimensionalArrayCopy = null;
 
-        duration = endTime-startTime;
+            if (dimension.equals("1D") || dimension.equals("2D")) {
+                //Making random 2D matrices
+                grid = ArrayUtil.generateRandomGrid(gridSize, 100);
+                gridCopy = ArrayUtil.copyExistingGrid(grid);
+            }
 
-        System.out.println("The parallel algorithm took " +duration+" milliseconds");
+            if (dimension.equals("3D")) {
+                //Making random 3D matrices
+                threeDimensionalArray = ArrayUtil.generateRandom3DGrid(gridSize, 100);
+                threeDimensionalArrayCopy = ArrayUtil.copyExisting3DGrid(threeDimensionalArray);
+            }
+            String neighborhoodType;
 
+            if (!dimension.equals("1D")) {
+                System.out.print("Choose the neighborhood type: Moore (M) or Von Neumann (V): ");
+                do {
+                    neighborhoodType = scanner.nextLine().trim().toUpperCase();
+
+                    switch (neighborhoodType) {
+                        case "M" -> System.out.println("You have chosen the Moore neighbourhood");
+                        case "V" -> System.out.println("You have chosen the Von Neumann neighbourhood");
+                        default ->
+                                System.out.println("Please enter a valid input, either 'M' for Moore or 'V' for Von Neumann");
+                    }
+                } while ((!neighborhoodType.equals("M") && !neighborhoodType.equals("V")));
+            } else {
+                neighborhoodType = "V";
+                System.out.println("Currently our 1D implementation only supports the Von Neumann neighbourhood");
+            }
+
+            long startTime;
+            long endTime;
+            long sequentialDuration = 0;
+            long parallelDuration = 0;
+
+            switch (dimension) {
+                case "1D":
+                    startTime = System.currentTimeMillis();
+                    Sequential.stencilSequentialAlgorithm_VonNeumann_1D(numOfIterations, grid, gridCopy);
+                    endTime = System.currentTimeMillis();
+                    sequentialDuration = endTime - startTime;
+
+                    System.out.println("> The sequential algorithm took " + sequentialDuration + " milliseconds");
+
+                    startTime = System.currentTimeMillis();
+                    Parallel.stencil1DParallelisedAlgorithm(numOfIterations, grid, gridCopy, blockSize);
+                    endTime = System.currentTimeMillis();
+                    parallelDuration = endTime - startTime;
+
+                    System.out.println("> The parallel algorithm took " + parallelDuration + " milliseconds");
+
+                    break;
+                case "2D":
+                    if (neighborhoodType.equals("V")) {
+                        startTime = System.currentTimeMillis();
+                        Sequential.stencilSequentialAlgorithm_VonNeumann(numOfIterations, grid, gridCopy);
+                        endTime = System.currentTimeMillis();
+                        sequentialDuration = endTime - startTime;
+
+                        System.out.println("> The sequential algorithm took " + sequentialDuration + " milliseconds");
+
+                        startTime = System.currentTimeMillis();
+                        Parallel.stencilParallelisedAlgorithm(numOfIterations, grid, gridCopy, blockSize, false);
+                        endTime = System.currentTimeMillis();
+                        parallelDuration = endTime - startTime;
+
+                        System.out.println("> The parallel algorithm took " + parallelDuration + " milliseconds");
+                    } else { // Using the moore neighbourhood
+                        startTime = System.currentTimeMillis();
+                        Sequential.stencilSequentialAlgorithm_Moore(numOfIterations, grid, gridCopy);
+                        endTime = System.currentTimeMillis();
+                        sequentialDuration = endTime - startTime;
+
+                        System.out.println("> The sequential algorithm took " + sequentialDuration + " milliseconds");
+
+                        startTime = System.currentTimeMillis();
+                        Parallel.stencilParallelisedAlgorithm(numOfIterations, grid, gridCopy, blockSize, true);
+                        endTime = System.currentTimeMillis();
+                        parallelDuration = endTime - startTime;
+
+                        System.out.println("> The parallel algorithm took " + parallelDuration + " milliseconds");
+                    }
+                    break;
+                case "3D":
+                    if (neighborhoodType.equals("V")) {
+                        startTime = System.currentTimeMillis();
+                        Sequential.stencil3DSequentialAlgorithm_VonNeumann(numOfIterations, threeDimensionalArray, threeDimensionalArrayCopy);
+                        endTime = System.currentTimeMillis();
+                        sequentialDuration = endTime - startTime;
+
+                        System.out.println("> The sequential algorithm took " + sequentialDuration + " milliseconds");
+
+                        startTime = System.currentTimeMillis();
+                        Parallel.stencil3DParallelisedAlgorithm(numOfIterations, threeDimensionalArray, threeDimensionalArrayCopy, blockSize, false);
+                        endTime = System.currentTimeMillis();
+                        parallelDuration = endTime - startTime;
+
+                        System.out.println("> The parallel algorithm took " + parallelDuration + " milliseconds");
+                    } else { // Using the moore neighbourhood
+                        startTime = System.currentTimeMillis();
+                        Sequential.stencil3DSequentialAlgorithm_Moore(numOfIterations, threeDimensionalArray, threeDimensionalArrayCopy);
+                        endTime = System.currentTimeMillis();
+                        sequentialDuration = endTime - startTime;
+
+                        System.out.println("> The sequential algorithm took " + sequentialDuration + " milliseconds");
+
+                        startTime = System.currentTimeMillis();
+                        Parallel.stencil3DParallelisedAlgorithm(numOfIterations, threeDimensionalArray, threeDimensionalArrayCopy, blockSize, true);
+                        endTime = System.currentTimeMillis();
+                        parallelDuration = endTime - startTime;
+
+                        System.out.println("> The parallel algorithm took " + parallelDuration + " milliseconds");
+                    }
+                    break;
+                default:
+                    System.out.println("This statement should not be accessed");
+            }
+
+            displaySpeedUp(sequentialDuration, parallelDuration);
+
+            System.out.println("Would you like to try this again? (Y/N): ");
+            input = scanner.nextLine().trim().toLowerCase();
+            tryAgain = input.equals("y");
+
+        }while (tryAgain);
+
+    }
+
+    public static void displaySpeedUp(long sequentialTime, long parallelTime){
+        double speedUp = ((double) sequentialTime / parallelTime)*100;
+        System.out.printf("Speedup achieved: %.2f%% %n ", speedUp);
     }
 
 }
