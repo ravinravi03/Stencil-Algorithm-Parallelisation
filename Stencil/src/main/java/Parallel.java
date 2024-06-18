@@ -1,3 +1,5 @@
+import com.aparapi.Range;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -134,5 +136,16 @@ public class Parallel {
 
         return outputArray;
 
+    }
+
+    public static int[] stencilOpenCLAlgorithm(int numOfIterations, int[] grid, int[] gridCopy){
+        int[] outputArray = gridCopy;
+
+        JacobiKernel kernel = new JacobiKernel(grid, outputArray, numOfIterations);
+
+        int size = (int) Math.sqrt(grid.length);
+        kernel.execute(Range.create(size * size));
+
+        return kernel.getOutput();
     }
 }
