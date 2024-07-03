@@ -293,7 +293,7 @@ public class Stencil{
 
         String pyjamaJarPath = "Pyjama-2.3.0.jar";
 
-        convertPjToJava(pyjamaJarPath);
+        convertPjToJava();
         compileJavaFile();
         long parallelDuration = runCompiledFile();
 
@@ -312,7 +312,7 @@ public class Stencil{
                 import java.util.Random;
                 import pj.*;
                 
-                public class Stencil {
+                public class StencilPyjama {
                 
                     public static void main(String[] args){
                         int[][] grid = generateRandomGrid(%d, 100);
@@ -373,16 +373,16 @@ public class Stencil{
                 
                 }""".formatted(gridSize, numOfIterations);
 
-        String filePath = "Stencil/src/main/pyjama/Stencil.pj";
+        String filePath = "./src/main/java/StencilPyjama.pj";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             writer.write(template);
         }
     }
 
-    private static void convertPjToJava(String pyjamaJarPath) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("java", "-jar", "Pyjama-2.3.0.jar", "-p2j", "Stencil.pj");
-        pb.directory(new File("./Stencil/src/main/pyjama"));
+    private static void convertPjToJava() throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder("java", "-jar", "Pyjama-2.3.0.jar", "-p2j", "StencilPyjama.pj");
+        pb.directory(new File("./src/main/java"));
 
         Process process = pb.start();
         int exitCode = process.waitFor();
@@ -392,19 +392,19 @@ public class Stencil{
     }
 
     private static void compileJavaFile() throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("javac", "-cp", "Pyjama-2.3.0.jar", "Stencil.java");
-        pb.directory(new File("./Stencil/src/main/pyjama")); // Setting working directory to Stencil/src/main/pyjama
+        ProcessBuilder pb = new ProcessBuilder("javac", "-cp", "Pyjama-2.3.0.jar", "StencilPyjama.java");
+        pb.directory(new File("./src/main/java")); // Setting working directory to Stencil/src/main/pyjama
 
         Process process = pb.start();
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new IOException("Failed to compile Stencil.java, exit code: " + exitCode);
+            throw new IOException("Failed to compile StencilPyjama.java, exit code: " + exitCode);
         }
     }
 
     private static long runCompiledFile() throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("java", "-cp", "Pyjama-2.3.0.jar", "Stencil.java");
-        pb.directory(new File("./Stencil/src/main/pyjama")); // Setting working directory to Stencil/src/main/pyjama
+        ProcessBuilder pb = new ProcessBuilder("java", "-cp", "Pyjama-2.3.0.jar", "StencilPyjama.java");
+        pb.directory(new File("./src/main/java")); // Setting working directory to Stencil/src/main/pyjama
 
         Process process = pb.start();
 
