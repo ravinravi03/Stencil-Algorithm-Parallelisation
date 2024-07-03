@@ -1,0 +1,63 @@
+import java.util.Random;
+import pj.*;
+
+public class StencilPyjama {
+
+    public static void main(String[] args){
+        int[][] grid = generateRandomGrid(10000, 100);
+        int[][] gridCopy = copyExistingGrid(grid);
+
+        long startTime = System.currentTimeMillis();
+        stencilSequentialAlgorithm_VonNeumann(10, grid, gridCopy);
+        long endTime = System.currentTimeMillis();
+
+        long duration = endTime - startTime;
+
+        System.out.println(duration);
+
+    }
+
+    public static int[][] stencilSequentialAlgorithm_VonNeumann(int numOfIterations, int[][] grid, int[][] gridCopy) {
+
+        for (int k = 0; k < numOfIterations; k++) {
+            //#omp parallel for shared(grid,gridCopy)
+            for (int i = 1; i < (grid.length - 1); i++) {
+                for (int j = 1; j < (grid.length - 1); j++) {
+                    int stencilTotal = grid[i - 1][j] + grid[i + 1][j] + grid[i][j - 1] + grid[i][j + 1];
+                    gridCopy[i][j] = stencilTotal / 4;
+                }
+            }
+            if (k < (numOfIterations - 1)) {
+                int[][] temp = gridCopy;
+                gridCopy = grid;
+                grid = temp;
+            }
+        }
+
+        return gridCopy;
+
+    }
+
+    public static int[][] generateRandomGrid(int size, int bound) {
+        int[][] grid = new int[size][size];
+        Random random = new Random();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                grid[i][j] = random.nextInt(bound);
+            }
+        }
+        return grid;
+    }
+
+    public static int[][] copyExistingGrid(int[][] grid) {
+        int[][] gridCopy = new int[grid.length][grid.length];
+        for (int i = 0; i < grid.length; i++) {
+            gridCopy[0][i] = grid[0][i];
+            gridCopy[grid.length - 1][i] = grid[grid.length - 1][i];
+            gridCopy[i][0] = grid[i][0];
+            gridCopy[i][grid.length - 1] = grid[i][grid.length - 1];
+        }
+        return gridCopy;
+    }
+
+}
